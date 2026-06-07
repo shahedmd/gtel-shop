@@ -12,6 +12,8 @@ import Button from './button'
 import Badge from './badge'
 import Input from './input'
 
+import { useCartStore } from '@/Components/stores/cart-store';
+
 interface Props {
     product: Product
 }
@@ -72,9 +74,11 @@ export default function ProductDetails({ product }: Props) {
         },
     ])
 
+     const { addItem } = useCartStore()
+
     const baseImages: string[] = product.images && product.images.length > 0 ? product.images : [product.image]
     const images: string[] = [baseImages[0], baseImages[0], baseImages[0]]
-    
+
     const discount = Math.round((1 - product.price / product.originalPrice) * 100)
     const badge = product.badge ? BADGE[product.badge] : null
     const whatsappUrl = `https://wa.me/${product.whatsapp ?? ''}?text=Hi, I'm interested in: ${product.name}`
@@ -335,14 +339,24 @@ export default function ProductDetails({ product }: Props) {
                             <span className="text-xs text-slate-500 ml-auto">৳{(product.price * qty).toLocaleString()}</span>
                         </div>
 
-                        {/* তিনটি প্রধান বোতাম */}
                         <div className="flex flex-col gap-2 sm:gap-3">
                             <Button
                                 variant="primary"
                                 size="lg"
                                 fullWidth
                                 leftIcon={<ShoppingCart size={16} />}
-                                onClick={() => { setAddedToCart(true); setTimeout(() => setAddedToCart(false), 1500) }}
+                                onClick={() => {
+                                    addItem({
+                                        id: String(product.id),
+                                        name: product.name,
+                                        price: product.price,
+                                        image: product.image,
+                                        quantity: qty,
+                                        stock: product.stock,
+                                    })
+                                    setAddedToCart(true)
+                                    setTimeout(() => setAddedToCart(false), 1500)
+                                }}
                                 className={addedToCart ? 'bg-emerald-600 hover:bg-emerald-500' : ''}
                             >
                                 {addedToCart ? '✓ কার্টে যোগ হয়েছে!' : 'কার্টে যোগ করুন'}
@@ -624,12 +638,12 @@ export default function ProductDetails({ product }: Props) {
 
             {/* ======== লাইটবক্স / জুম মোডাল ======== */}
             {lightboxOpen && (
-                <div 
+                <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
                     onClick={() => setLightboxOpen(false)}
                 >
-                    <div 
-                        className="relative max-w-3xl w-full" 
+                    <div
+                        className="relative max-w-3xl w-full"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
