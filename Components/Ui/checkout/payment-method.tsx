@@ -1,6 +1,7 @@
 'use client';
 
-import { useCheckoutStore, PaymentMethod } from '@/Components/stores/checkout-store';
+import { useCheckoutStore } from '@/Components/stores/checkout-store';
+import type { PaymentMethod } from '@/Components/stores/checkout-store';
 import { CreditCard, Wallet } from 'lucide-react';
 
 interface PaymentMethodProps {
