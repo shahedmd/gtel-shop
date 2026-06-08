@@ -6,7 +6,7 @@ import { useSetupBuilderStore } from '@/Components/stores/setup-builder-store';
 import { useCartStore } from '@/Components/stores/cart-store';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, ShoppingCart, Trash2 } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, Trash2, Eye } from 'lucide-react';
 
 // সব ক্যাটাগরি
 const CATEGORIES = [
@@ -27,6 +27,36 @@ export default function SetupBuilder() {
     const { selectedProducts, addProduct, removeProduct, getTotalPrice, clearSetup } = useSetupBuilderStore();
     const { addItem } = useCartStore();
     const [setupName, setSetupName] = useState('My Custom Setup');
+    
+    // State to track expanded categories and visible product counts
+    const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+    const [visibleCount, setVisibleCount] = useState<Map<string, number>>(new Map());
+
+    const PRODUCTS_PER_PAGE = 5;
+
+    const getVisibleCount = (category: string) => {
+        return visibleCount.get(category) ?? PRODUCTS_PER_PAGE;
+    };
+
+    const toggleLoadAll = (category: string) => {
+        const newExpandedCategories = new Set(expandedCategories);
+        if (newExpandedCategories.has(category)) {
+            newExpandedCategories.delete(category);
+            const newVisibleCount = new Map(visibleCount);
+            newVisibleCount.set(category, PRODUCTS_PER_PAGE);
+            setVisibleCount(newVisibleCount);
+        } else {
+            newExpandedCategories.add(category);
+        }
+        setExpandedCategories(newExpandedCategories);
+    };
+
+    const handleViewMore = (category: string) => {
+        const newVisibleCount = new Map(visibleCount);
+        const currentCount = getVisibleCount(category);
+        newVisibleCount.set(category, currentCount + PRODUCTS_PER_PAGE);
+        setVisibleCount(newVisibleCount);
+    };
 
     const getProductsByCategory = (category: string) => {
         return ALL_PRODUCTS.filter(p => p.category === category);
@@ -71,59 +101,114 @@ export default function SetupBuilder() {
                     <div className="lg:col-span-2">
                         <div className="bg-white rounded-lg shadow p-6 space-y-6">
 
-                            {CATEGORIES.map((category) => (
-                                <div key={category} className="border-b pb-6 last:border-b-0">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h3 className="text-lg font-bold text-gray-900">{category}</h3>
-                                        {getSelectedProduct(category) && (
-                                            <button
-                                                onClick={() => removeProduct(category)}
-                                                className="text-red-500 hover:text-red-700 text-sm"
-                                            >
-                                                <Trash2 size={16} /> Remove
-                                            </button>
+                            {CATEGORIES.map((category) => {
+                                const categoryProducts = getProductsByCategory(category);
+                                const visibleProducts = categoryProducts.slice(0, getVisibleCount(category));
+                                const hasMore = categoryProducts.length > getVisibleCount(category);
+                                const showLoadAll = expandedCategories.has(category) && categoryProducts.length > getVisibleCount(category);
+
+                                return (
+                                    <div key={category} className="border-b pb-6 last:border-b-0">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h3 className="text-lg font-bold text-gray-900">{category}</h3>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-gray-500">
+                                                    {getVisibleCount(category)} of {categoryProducts.length}
+                                                </span>
+                                                {getSelectedProduct(category) && (
+                                                    <button
+                                                        onClick={() => removeProduct(category)}
+                                                        className="text-red-500 hover:text-red-700 text-sm"
+                                                    >
+                                                        <Trash2 size={16} /> Remove
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                            {visibleProducts.map((product) => {
+                                                const isSelected = getSelectedProduct(category)?.product.id === String(product.id);
+                                                return (
+                                                    <div
+                                                        key={product.id}
+                                                        className={`border-2 rounded-lg p-3 transition relative group ${isSelected
+                                                            ? 'border-blue-600 bg-blue-50'
+                                                            : 'border-gray-200 hover:border-blue-300'
+                                                            }`}
+                                                    >
+                                                        {/* View Details Button */}
+                                                        <Link
+                                                            href={`/setups/builder/product-details/${product.id}?category=${encodeURIComponent(category)}`}
+                                                            className="absolute top-2 right-2 bg-white rounded-full p-2 shadow opacity-0 group-hover:opacity-100 transition z-10"
+                                                            title="View Details"
+                                                        >
+                                                            <Eye size={16} className="text-blue-600" />
+                                                        </Link>
+
+                                                        <button
+                                                            onClick={() => addProduct(category, {
+                                                                id: String(product.id),
+                                                                name: product.name,
+                                                                price: product.price,
+                                                                image: product.image,
+                                                            })}
+                                                            className="w-full text-left"
+                                                        >
+                                                            <div className="relative h-16 bg-gray-100 rounded mb-2 overflow-hidden">
+                                                                <Image
+                                                                    src={product.image}
+                                                                    alt={product.name}
+                                                                    fill
+                                                                    className="object-cover"
+                                                                    sizes="100px"
+                                                                />
+                                                            </div>
+                                                            <p className="text-xs font-semibold text-gray-900 line-clamp-2 mb-1">
+                                                                {product.name}
+                                                            </p>
+                                                            <p className="text-sm font-bold text-blue-600">৳{product.price.toLocaleString()}</p>
+                                                            {isSelected && (
+                                                                <div className="mt-2 text-blue-600 font-bold text-sm">✓ Selected</div>
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Pagination Controls */}
+                                        {categoryProducts.length > PRODUCTS_PER_PAGE && (
+                                            <div className="flex gap-2 mt-4 justify-center">
+                                                {hasMore && (
+                                                    <button
+                                                        onClick={() => handleViewMore(category)}
+                                                        className="px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition"
+                                                    >
+                                                        View More
+                                                    </button>
+                                                )}
+                                                {showLoadAll && (
+                                                    <button
+                                                        onClick={() => toggleLoadAll(category)}
+                                                        className="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                                                    >
+                                                        View Less
+                                                    </button>
+                                                )}
+                                                {!expandedCategories.has(category) && categoryProducts.length > PRODUCTS_PER_PAGE && (
+                                                    <button
+                                                        onClick={() => toggleLoadAll(category)}
+                                                        className="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                                                    >
+                                                        Load All ({categoryProducts.length})
+                                                    </button>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
-
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                        {getProductsByCategory(category).map((product) => {
-                                            const isSelected = getSelectedProduct(category)?.product.id === String(product.id);
-                                            return (
-                                                <button
-                                                    key={product.id}
-                                                    onClick={() => addProduct(category, {
-                                                        id: String(product.id),
-                                                        name: product.name,
-                                                        price: product.price,
-                                                        image: product.image,
-                                                    })}
-                                                    className={`border-2 rounded-lg p-3 transition ${isSelected
-                                                        ? 'border-blue-600 bg-blue-50'
-                                                        : 'border-gray-200 hover:border-blue-300'
-                                                        }`}
-                                                >
-                                                    <div className="relative h-16 bg-gray-100 rounded mb-2 overflow-hidden">
-                                                        <Image
-                                                            src={product.image}
-                                                            alt={product.name}
-                                                            fill
-                                                            className="object-cover"
-                                                            sizes="100px"
-                                                        />
-                                                    </div>
-                                                    <p className="text-xs font-semibold text-gray-900 line-clamp-2 mb-1">
-                                                        {product.name}
-                                                    </p>
-                                                    <p className="text-sm font-bold text-blue-600">৳{product.price.toLocaleString()}</p>
-                                                    {isSelected && (
-                                                        <div className="mt-2 text-blue-600 font-bold text-sm">✓ Selected</div>
-                                                    )}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
 

@@ -17,6 +17,7 @@ interface SetupBuilderStore {
   clearSetup: () => void;
   getTotalPrice: () => number;
   getProductsByCategory: () => Map<string, SetupProduct>;
+  getSelectedProduct: (categoryName: string) => SetupProduct | undefined;
 }
 
 export const useSetupBuilderStore = create<SetupBuilderStore>((set, get) => ({
@@ -47,5 +48,9 @@ export const useSetupBuilderStore = create<SetupBuilderStore>((set, get) => ({
       map.set(item.categoryName, item);
     });
     return map;
+  },
+
+  getSelectedProduct: (categoryName: string) => {
+    return get().selectedProducts.find(p => p.categoryName === categoryName);
   },
 }));
