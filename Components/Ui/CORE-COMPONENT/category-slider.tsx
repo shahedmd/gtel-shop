@@ -1,61 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { SLIDER_SLIDES, CATEGORIES } from './data/categories-data'
 import {
-    BatteryCharging,
-    ChevronLeft,
-    ChevronRight,
-    Cpu,
-    Flame,
-    Grid3X3,
-    MonitorSmartphone,
-    Search,
-    ShieldCheck,
-    Smartphone,
-    Sparkles,
-    Wrench,
-    Zap,
-} from 'lucide-react'
-
-const slides = [
-    {
-        title: 'Microscope & Board Repair Tools',
-        subtitle: 'Premium tools for mobile servicing — all in one place.',
-        badge: 'Technician Choice',
-        image: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=1200&q=80',
-        href: '/microscope',
-    },
-    {
-        title: 'Hot Air, Soldering & Rework Setup',
-        subtitle: 'Top repair desk equipment for every technician.',
-        badge: 'Best Seller',
-        image: 'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?auto=format&fit=crop&w=1200&q=80',
-        href: '/hotgun',
-    },
-    {
-        title: 'LCD Separator & Cutting Machine',
-        subtitle: 'Display repair, glass removal & finishing tools.',
-        badge: 'Workshop Ready',
-        image: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&w=1200&q=80',
-        href: '/cutting-machine',
-    },
-]
-
-const categories = [
-    { label: 'All', labelBn: 'সব পণ্য', href: '/categories/categories', icon: Grid3X3, count: '100+' },
-    { label: 'Microscope', labelBn: 'মাইক্রোস্কোপ', href: '/categories/microscope', icon: Search, count: '24+' },
-    { label: 'Hot Gun', labelBn: 'হট গান', href: '/categories/hotgun', icon: Flame, count: '18+' },
-    { label: 'Soldering Iron', labelBn: 'সোল্ডারিং আয়রন', href: '/categories/soldering-iron', icon: Zap, count: '32+' },
-    { label: 'Cutting Machine', labelBn: 'কাটিং মেশিন', href: '/categories/cutting-machine', icon: Wrench, count: '12+' },
-    { label: 'LCD Separator', labelBn: 'এলসিডি সেপারেটর', href: '/categories/lcd-separator', icon: MonitorSmartphone, count: '15+' },
-    { label: 'Screw Driver', labelBn: 'স্ক্রু ড্রাইভার', href: '/categories/screwdriver', icon: Wrench, count: '40+' },
-    { label: 'Glue Remover', labelBn: 'গ্লু রিমুভার', href: '/categories/glue-remover', icon: Sparkles, count: '10+' },
-    { label: 'Charger', labelBn: 'চার্জার', href: '/categories/charger', icon: BatteryCharging, count: '28+' },
-    { label: 'Mobile Parts', labelBn: 'মোবাইল পার্টস', href: '/categories/mobile-parts', icon: Smartphone, count: '80+' },
-    { label: 'IC & Chip', labelBn: 'আইসি চিপ', href: '/categories/ic-chip', icon: Cpu, count: '50+' },
-    { label: 'Protection Tools', labelBn: 'প্রটেকশন টুলস', href: '/categories/protection-tools', icon: ShieldCheck, count: '22+' },
-]
+    SLIDER_AUTO_INTERVAL,
+    SLIDER_TRANSITION_DURATION,
+    PRIMARY_COLOR,
+    SUCCESS_COLOR,
+    BG_LIGHT,
+    CATEGORY_PANEL_HEIGHT_XL,
+} from './data/category-constants'
 
 function cn(...classes: (string | false | null | undefined)[]) {
     return classes.filter(Boolean).join(' ')
@@ -64,39 +21,48 @@ function cn(...classes: (string | false | null | undefined)[]) {
 export default function CategorySliderSection() {
     const [activeSlide, setActiveSlide] = useState(0)
     const [transitioning, setTransitioning] = useState(false)
-    const currentSlide = slides[activeSlide]
+    const currentSlide = SLIDER_SLIDES[activeSlide]
 
-    const goToSlide = (index: number) => {
+    const goToSlide = useCallback((index: number) => {
         if (transitioning || index === activeSlide) return
         setTransitioning(true)
         setTimeout(() => {
             setActiveSlide(index)
             setTransitioning(false)
-        }, 180)
-    }
+        }, SLIDER_TRANSITION_DURATION)
+    }, [transitioning, activeSlide])
 
-    const nextSlide = () => goToSlide((activeSlide + 1) % slides.length)
-    const prevSlide = () => goToSlide((activeSlide - 1 + slides.length) % slides.length)
+    const nextSlide = useCallback(() => {
+        goToSlide((activeSlide + 1) % SLIDER_SLIDES.length)
+    }, [activeSlide, goToSlide])
 
+    const prevSlide = useCallback(() => {
+        goToSlide((activeSlide - 1 + SLIDER_SLIDES.length) % SLIDER_SLIDES.length)
+    }, [activeSlide, goToSlide])
+
+    // Auto-advance slider
     useEffect(() => {
-        const timer = window.setInterval(nextSlide, 5000)
+        const timer = window.setInterval(nextSlide, SLIDER_AUTO_INTERVAL)
         return () => window.clearInterval(timer)
-    }, [activeSlide])
+    }, [nextSlide])
 
     return (
-        <section className="bg-[#F4F6FB] px-3 py-3 sm:px-5 lg:px-7 lg:py-4">
+        <section className={cn('px-3 py-3 sm:px-5 lg:px-7 lg:py-4', `bg-[${BG_LIGHT}]`)}>
             <div className="mx-auto max-w-[1500px]">
                 <div className="grid gap-3 xl:grid-cols-[minmax(0,1.4fr)_360px] 2xl:grid-cols-[minmax(0,1.5fr)_380px]">
 
                     {/* ── HERO SLIDER ── */}
                     <div className="relative h-[300px] overflow-hidden rounded-2xl bg-slate-950 shadow-[0_12px_40px_rgba(15,23,42,0.16)] sm:h-[340px] lg:h-[390px] xl:h-[420px]">
 
-                        {/* IMAGE */}
-                        <img
+                        {/* IMAGE - ✅ OPTIMIZED: Using Next.js Image component */}
+                        <Image
                             src={currentSlide.image}
                             alt={currentSlide.title}
+                            fill
+                            priority={activeSlide === 0}
+                            sizes="(max-width: 1024px) 100vw, (max-width: 1536px) calc(100vw - 400px), calc(100vw - 420px)"
                             className={cn(
-                                'absolute inset-0 h-full w-full object-cover transition-opacity duration-300',
+                                'object-cover transition-opacity duration-300',
                                 transitioning ? 'opacity-0' : 'opacity-100'
                             )}
                         />
@@ -113,7 +79,7 @@ export default function CategorySliderSection() {
                         >
                             {/* BADGE */}
                             <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-white/90 backdrop-blur-sm">
-                                <span className="h-1.5 w-1.5 rounded-full bg-[#5EE7A0]" />
+                                <span className={cn('h-1.5 w-1.5 rounded-full')} style={{ backgroundColor: SUCCESS_COLOR }} />
                                 {currentSlide.badge}
                             </span>
 
@@ -136,6 +102,7 @@ export default function CategorySliderSection() {
                                     type="button"
                                     onClick={nextSlide}
                                     className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-4 text-[13px] font-bold text-white/90 backdrop-blur-sm transition-all hover:bg-white/18"
+                                    aria-label="Next slide"
                                 >
                                     Next
                                     <ChevronRight size={15} />
@@ -145,7 +112,7 @@ export default function CategorySliderSection() {
 
                         {/* SLIDE DOTS — top left */}
                         <div className="absolute left-5 top-4 z-20 flex items-center gap-1.5">
-                            {slides.map((slide, i) => (
+                            {SLIDER_SLIDES.map((slide, i) => (
                                 <button
                                     key={slide.title}
                                     type="button"
@@ -154,7 +121,8 @@ export default function CategorySliderSection() {
                                         'h-1.5 rounded-full transition-all duration-300',
                                         activeSlide === i ? 'w-6 bg-white' : 'w-1.5 bg-white/35 hover:bg-white/60'
                                     )}
-                                    aria-label={`Slide ${i + 1}`}
+                                    aria-label={`Go to slide ${i + 1}`}
+                                    aria-current={activeSlide === i}
                                 />
                             ))}
                         </div>
@@ -164,16 +132,16 @@ export default function CategorySliderSection() {
                             <button
                                 type="button"
                                 onClick={prevSlide}
-                                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-white/12 text-white backdrop-blur-sm transition hover:bg-white/22"
-                                aria-label="Previous"
+                                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-white/12 text-white backdrop-blur-sm transition hover:bg-white/22 active:scale-95"
+                                aria-label="Previous slide"
                             >
                                 <ChevronLeft size={17} />
                             </button>
                             <button
                                 type="button"
                                 onClick={nextSlide}
-                                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-white/12 text-white backdrop-blur-sm transition hover:bg-white/22"
-                                aria-label="Next"
+                                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-white/12 text-white backdrop-blur-sm transition hover:bg-white/22 active:scale-95"
+                                aria-label="Next slide"
                             >
                                 <ChevronRight size={17} />
                             </button>
@@ -181,12 +149,12 @@ export default function CategorySliderSection() {
 
                         {/* SLIDE COUNTER pill */}
                         <div className="absolute right-4 top-4 z-20 hidden rounded-full border border-white/15 bg-black/30 px-2.5 py-1 text-[10px] font-black tabular-nums text-white/70 backdrop-blur-sm sm:block">
-                            {activeSlide + 1} / {slides.length}
+                            {activeSlide + 1} / {SLIDER_SLIDES.length}
                         </div>
                     </div>
 
                     {/* ── CATEGORY PANEL ── */}
-                    <aside className="flex flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_28px_rgba(15,23,42,0.07)] xl:h-[420px]">
+                    <aside className="flex flex-col rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_28px_rgba(15,23,42,0.07)]" style={{ height: `${CATEGORY_PANEL_HEIGHT_XL}px` }}>
 
                         {/* PANEL HEADER */}
                         <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
@@ -196,7 +164,8 @@ export default function CategorySliderSection() {
                             </div>
                             <Link
                                 href="/categories"
-                                className="rounded-lg bg-[#2B2EE6]/8 px-3 py-1.5 text-[11px] font-black text-[#2B2EE6] transition hover:bg-[#2B2EE6]/14"
+                                className={cn('rounded-lg px-3 py-1.5 text-[11px] font-black transition hover:bg-[#2B2EE6]/14')}
+                                style={{ backgroundColor: `${PRIMARY_COLOR}/8`, color: PRIMARY_COLOR }}
                             >
                                 View All
                             </Link>
@@ -204,7 +173,7 @@ export default function CategorySliderSection() {
 
                         {/* CATEGORY GRID */}
                         <div className="grid flex-1 gap-1 overflow-y-auto p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-1 xl:overflow-y-auto">
-                            {categories.map((cat) => {
+                            {CATEGORIES.map((cat) => {
                                 const Icon = cat.icon
                                 return (
                                     <Link
