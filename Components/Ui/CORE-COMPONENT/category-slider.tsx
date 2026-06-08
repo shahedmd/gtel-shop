@@ -43,18 +43,18 @@ const slides = [
 ]
 
 const categories = [
-    { label: 'Microscope', labelBn: 'মাইক্রোস্কোপ', href: '/microscope', icon: Search, count: '24+' },
-    { label: 'Hot Gun', labelBn: 'হট গান', href: '/hotgun', icon: Flame, count: '18+' },
-    { label: 'Soldering Iron', labelBn: 'সোল্ডারিং আয়রন', href: '/soldering-iron', icon: Zap, count: '32+' },
-    { label: 'Cutting Machine', labelBn: 'কাটিং মেশিন', href: '/cutting-machine', icon: Wrench, count: '12+' },
-    { label: 'LCD Separator', labelBn: 'এলসিডি সেপারেটর', href: '/tools/lcd-separator', icon: MonitorSmartphone, count: '15+' },
-    { label: 'Screw Driver', labelBn: 'স্ক্রু ড্রাইভার', href: '/tools/screwdriver', icon: Wrench, count: '40+' },
-    { label: 'Glue Remover', labelBn: 'গ্লু রিমুভার', href: '/tools/glue-remover', icon: Sparkles, count: '10+' },
-    { label: 'Charger', labelBn: 'চার্জার', href: '/tools/charger', icon: BatteryCharging, count: '28+' },
-    { label: 'Mobile Parts', labelBn: 'মোবাইল পার্টস', href: '/mobile-parts', icon: Smartphone, count: '80+' },
-    { label: 'IC & Chip', labelBn: 'আইসি চিপ', href: '/ic-chip', icon: Cpu, count: '50+' },
-    { label: 'Protection Tools', labelBn: 'প্রটেকশন টুলস', href: '/protection-tools', icon: ShieldCheck, count: '22+' },
-    { label: 'All Categories', labelBn: 'সব ক্যাটাগরি', href: '/categories', icon: Grid3X3, count: '100+' },
+    { label: 'All', labelBn: 'সব পণ্য', href: '/categories/categories', icon: Grid3X3, count: '100+' },
+    { label: 'Microscope', labelBn: 'মাইক্রোস্কোপ', href: '/categories/microscope', icon: Search, count: '24+' },
+    { label: 'Hot Gun', labelBn: 'হট গান', href: '/categories/hotgun', icon: Flame, count: '18+' },
+    { label: 'Soldering Iron', labelBn: 'সোল্ডারিং আয়রন', href: '/categories/soldering-iron', icon: Zap, count: '32+' },
+    { label: 'Cutting Machine', labelBn: 'কাটিং মেশিন', href: '/categories/cutting-machine', icon: Wrench, count: '12+' },
+    { label: 'LCD Separator', labelBn: 'এলসিডি সেপারেটর', href: '/categories/lcd-separator', icon: MonitorSmartphone, count: '15+' },
+    { label: 'Screw Driver', labelBn: 'স্ক্রু ড্রাইভার', href: '/categories/screwdriver', icon: Wrench, count: '40+' },
+    { label: 'Glue Remover', labelBn: 'গ্লু রিমুভার', href: '/categories/glue-remover', icon: Sparkles, count: '10+' },
+    { label: 'Charger', labelBn: 'চার্জার', href: '/categories/charger', icon: BatteryCharging, count: '28+' },
+    { label: 'Mobile Parts', labelBn: 'মোবাইল পার্টস', href: '/categories/mobile-parts', icon: Smartphone, count: '80+' },
+    { label: 'IC & Chip', labelBn: 'আইসি চিপ', href: '/categories/ic-chip', icon: Cpu, count: '50+' },
+    { label: 'Protection Tools', labelBn: 'প্রটেকশন টুলস', href: '/categories/protection-tools', icon: ShieldCheck, count: '22+' },
 ]
 
 function cn(...classes: (string | false | null | undefined)[]) {

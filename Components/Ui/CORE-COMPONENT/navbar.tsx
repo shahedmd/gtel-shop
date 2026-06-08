@@ -21,54 +21,60 @@ import {
 const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: Home },
   {
+    label: 'Build Setup',
+    href: '/setups/builder',
+    icon: Wrench,
+    badge: 'Popular',
+  },
+  {
     label: 'Microscope',
-    href: '/microscope',
+    href: '/categories/microscope',
     icon: Microscope,
     badge: 'New',
   },
   {
     label: 'Hot Gun',
-    href: '/hotgun',
+    href: '/categories/hotgun',
     icon: Flame,
   },
   {
     label: 'Soldering Iron',
-    href: '/soldering-iron',
+    href: '/categories/soldering-iron',
     icon: Zap,
   },
   {
     label: 'Cutting Machine',
-    href: '/cutting-machine',
+    href: '/categories/cutting-machine',
     icon: Scissors,
   },
   {
     label: 'Tools',
-    href: '/tools',
+    href: '/categories',
     icon: Wrench,
     children: [
       {
         label: 'Screw Driver',
-        href: '/tools/screwdriver',
+        href: '/categories/screwdriver',
         description: 'Professional precision repair tools',
       },
       {
         label: 'Glue Remover',
-        href: '/tools/glue-remover',
+        href: '/categories/glue-remover',
         description: 'Premium cleaning & remover liquids',
       },
       {
         label: 'Charger',
-        href: '/tools/charger',
+        href: '/categories/charger',
         description: 'Fast charging accessories',
       },
       {
         label: 'LCD Separator',
-        href: '/tools/lcd-separator',
+        href: '/categories/lcd-separator',
         description: 'Display repair equipment',
       },
       {
         label: 'All Tools',
-        href: '/tools/all',
+        href: '/categories/categories',
         description: 'Browse complete collection',
       },
     ],
