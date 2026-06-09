@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -17,6 +17,7 @@ import {
   Zap,
   Scissors,
 } from 'lucide-react'
+import Badge from '@/Components/Ui/badge'
 
 const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: Home },
@@ -97,17 +98,31 @@ export default function Navbar() {
 
   const cartCount = 3
 
+  // Memoized active checker - FIX: Only check exact match for Tools category
+  const isActive = useCallback((href: string) => {
+    if (href === '/') return pathname === '/'
+    // Tools dropdown should only be active if we're viewing /categories/categories
+    if (href === '/categories') {
+      return pathname === '/categories/categories'
+    }
+    return pathname.startsWith(href)
+  }, [pathname])
+
+  // Focus search input when opened
   useEffect(() => {
     if (searchOpen) {
-      window.setTimeout(() => searchRef.current?.focus(), 80)
+      const timer = window.setTimeout(() => searchRef.current?.focus(), 80)
+      return () => clearTimeout(timer)
     }
   }, [searchOpen])
 
+  // Prevent body scroll when mobile menu open
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [mobileOpen])
 
+  // Close mobile menu on resize to desktop
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1280) setMobileOpen(false)
@@ -119,32 +134,34 @@ export default function Navbar() {
   // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false)
+    setDropdown(null)
   }, [pathname])
 
-  const isActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname.startsWith(href)
-
-  const openDropdown = (label: string) => {
+  // Dropdown handlers with debounce
+  const openDropdown = useCallback((label: string) => {
     if (closeTimer.current) clearTimeout(closeTimer.current)
     setDropdown(label)
-  }
+  }, [])
 
-  const closeDropdown = () => {
+  const closeDropdown = useCallback(() => {
     closeTimer.current = setTimeout(() => setDropdown(null), 120)
-  }
+  }, [])
 
-  const openSearch = () => {
+  const openSearch = useCallback(() => {
     setSearchOpen(true)
     setDropdown(null)
     setMobileOpen(false)
-  }
+  }, [])
 
-  const closeSearch = () => {
+  const closeSearch = useCallback(() => {
     setSearchOpen(false)
     setQuery('')
-  }
+  }, [])
 
-  const closeMobile = () => setMobileOpen(false)
+  const closeMobile = useCallback(() => setMobileOpen(false), [])
+
+  // Memoize nav items to prevent unnecessary re-renders
+  const navItems = useMemo(() => NAV_ITEMS, [])
 
   return (
     <>
@@ -161,7 +178,7 @@ export default function Navbar() {
       {/* NAVBAR */}
       <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/90 backdrop-blur-2xl shadow-[0_2px_16px_rgba(15,23,42,0.06)]">
         <div className="mx-auto max-w-[1500px] px-3 sm:px-5 lg:px-7">
-          <div className="flex h-[68px] items-center gap-2 sm:h-[76px]">
+          <div className="flex h-[64px] items-center gap-2 sm:h-[70px]">
 
             {/* LOGO */}
             <Link
@@ -172,11 +189,11 @@ export default function Navbar() {
                 <Zap size={19} />
               </span>
               {!searchOpen && (
-                <span className="hidden sm:block">
-                  <span className="block text-[18px] font-black tracking-tight text-slate-950 leading-none">
+                <span className="block">
+                  <span className="block text-[16px] sm:text-[18px] font-black tracking-tight text-slate-950 leading-none">
                     GTEL
                   </span>
-                  <span className="block text-[10px] font-semibold text-slate-400 tracking-wide leading-none mt-0.5">
+                  <span className="block text-[9px] sm:text-[10px] font-semibold text-slate-400 tracking-wide leading-none mt-0.5">
                     SHOP
                   </span>
                 </span>
@@ -186,16 +203,17 @@ export default function Navbar() {
             {/* DESKTOP NAV */}
             {!searchOpen && (
               <nav className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 xl:flex">
-                {NAV_ITEMS.map((item) => {
+                {navItems.map((item) => {
                   const Icon = item.icon
                   const active = isActive(item.href)
+                  const hasChildren = !!item.children
 
                   return (
                     <div
                       key={item.label}
                       className="relative shrink-0"
-                      onMouseEnter={() => item.children && openDropdown(item.label)}
-                      onMouseLeave={() => item.children && closeDropdown()}
+                      onMouseEnter={() => hasChildren && openDropdown(item.label)}
+                      onMouseLeave={() => hasChildren && closeDropdown()}
                     >
                       <Link
                         href={item.href}
@@ -215,14 +233,15 @@ export default function Navbar() {
                         />
                         <span className="whitespace-nowrap">{item.label}</span>
                         {item.badge && (
-                          <span className={cn(
-                            'rounded-full px-1.5 py-0.5 text-[9px] font-black uppercase leading-none',
-                            active ? 'bg-white/25 text-white' : 'bg-amber-100 text-amber-700'
-                          )}>
+                          <Badge
+                            variant={active ? 'default' : 'warning'}
+                            size="sm"
+                            className={active ? 'bg-white/25' : ''}
+                          >
                             {item.badge}
-                          </span>
+                          </Badge>
                         )}
-                        {item.children && (
+                        {hasChildren && (
                           <ChevronDown
                             size={13}
                             className={cn(
@@ -235,7 +254,7 @@ export default function Navbar() {
 
                       {/* DROPDOWN */}
                       <AnimatePresence>
-                        {item.children && dropdown === item.label && (
+                        {hasChildren && dropdown === item.label && (
                           <motion.div
                             initial={{ opacity: 0, y: 10, scale: 0.97 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -254,7 +273,7 @@ export default function Navbar() {
                               </p>
                             </div>
                             <div className="space-y-0.5">
-                              {item.children.map((child) => (
+                              {item.children?.map((child) => (
                                 <Link
                                   key={child.href}
                                   href={child.href}
@@ -297,6 +316,7 @@ export default function Navbar() {
                     type="button"
                     onClick={() => setQuery('')}
                     className="rounded-lg p-1.5 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700"
+                    aria-label="Clear search"
                   >
                     <X size={14} />
                   </button>
@@ -304,7 +324,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={closeSearch}
-                  className="shrink-0 rounded-lg bg-slate-100 px-3.5 py-2 text-xs font-black text-slate-700 transition-all hover:bg-slate-200"
+                  className="shrink-0 rounded-lg bg-slate-100 px-3.5 py-2 text-xs font-black text-slate-700 transition-all hover:bg-slate-200 active:scale-95"
                 >
                   Close
                 </button>
@@ -318,7 +338,8 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={openSearch}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:border-slate-300 hover:shadow-md hover:-translate-y-px"
+                  aria-label="Open search"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:border-slate-300 hover:shadow-md hover:-translate-y-px active:scale-95"
                 >
                   <Search size={17} />
                 </button>
@@ -326,7 +347,8 @@ export default function Navbar() {
                 {/* CART */}
                 <Link
                   href="/cart"
-                  className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:border-slate-300 hover:shadow-md hover:-translate-y-px"
+                  aria-label={`Cart with ${cartCount} items`}
+                  className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:border-slate-300 hover:shadow-md hover:-translate-y-px active:scale-95"
                 >
                   <ShoppingCart size={18} />
                   {cartCount > 0 && (
@@ -339,7 +361,8 @@ export default function Navbar() {
                 {/* ACCOUNT */}
                 <Link
                   href="/account"
-                  className="hidden h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:border-slate-300 hover:shadow-md hover:-translate-y-px sm:flex"
+                  aria-label="Account"
+                  className="hidden h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:border-slate-300 hover:shadow-md hover:-translate-y-px active:scale-95 sm:flex"
                 >
                   <User size={18} />
                 </Link>
@@ -347,7 +370,7 @@ export default function Navbar() {
                 {/* SIGN IN */}
                 <Link
                   href="/login"
-                  className="hidden h-10 items-center justify-center rounded-xl bg-[#070B1A] px-5 text-[13px] font-black text-white transition-all hover:bg-slate-800 hover:shadow-lg hover:-translate-y-px xl:flex"
+                  className="hidden h-10 items-center justify-center rounded-xl bg-[#070B1A] px-5 text-[13px] font-black text-white transition-all hover:bg-slate-800 hover:shadow-lg hover:-translate-y-px active:scale-95 xl:flex"
                 >
                   Sign In
                 </Link>
@@ -390,6 +413,7 @@ export default function Navbar() {
             transition={{ duration: 0.2 }}
             onClick={closeMobile}
             className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm xl:hidden"
+            aria-hidden="true"
           />
         )}
       </AnimatePresence>
@@ -404,15 +428,16 @@ export default function Navbar() {
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             className="fixed right-0 top-0 z-50 flex h-full w-[320px] max-w-[88vw] flex-col bg-white shadow-[-8px_0_32px_rgba(15,23,42,0.12)] xl:hidden"
+            aria-label="Navigation menu"
           >
             {/* DRAWER HEADER */}
-            <div className="flex h-[68px] items-center justify-between border-b border-slate-100 px-4">
+            <div className="flex h-[64px] sm:h-[70px] items-center justify-between border-b border-slate-100 px-4">
               <Link href="/" onClick={closeMobile} className="flex items-center gap-2.5">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2B2EE6] text-white shadow-[0_4px_12px_rgba(43,46,230,0.25)]">
                   <Zap size={18} />
                 </span>
                 <span>
-                  <span className="block text-[15px] font-black text-slate-950 leading-none">
+                  <span className="block text-[14px] sm:text-[15px] font-black text-slate-950 leading-none">
                     GTEL Shop
                   </span>
                   <span className="mt-0.5 block text-[10px] font-semibold text-slate-400 tracking-wide leading-none">
@@ -423,6 +448,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={closeMobile}
+                aria-label="Close menu"
                 className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition-all hover:bg-slate-200 active:scale-95"
               >
                 <X size={17} />
@@ -431,11 +457,12 @@ export default function Navbar() {
 
             {/* DRAWER BODY */}
             <div className="flex-1 overflow-y-auto p-3 space-y-0.5">
-              {NAV_ITEMS.map((item) => {
+              {navItems.map((item) => {
                 const Icon = item.icon
                 const active = isActive(item.href)
+                const hasChildren = !!item.children
 
-                if (item.children) {
+                if (hasChildren) {
                   const expanded = mobileExpanded === item.label
                   return (
                     <div key={item.label}>
@@ -470,7 +497,7 @@ export default function Navbar() {
                             className="overflow-hidden"
                           >
                             <div className="ml-7 border-l-2 border-slate-100 py-1 pl-3">
-                              {item.children.map((child) => (
+                              {item.children?.map((child) => (
                                 <Link
                                   key={child.href}
                                   href={child.href}
@@ -509,12 +536,13 @@ export default function Navbar() {
                     />
                     <span className="flex-1">{item.label}</span>
                     {item.badge && (
-                      <span className={cn(
-                        'rounded-full px-2 py-0.5 text-[9px] font-black uppercase',
-                        active ? 'bg-white/25 text-white' : 'bg-amber-100 text-amber-700'
-                      )}>
+                      <Badge
+                        variant={active ? 'default' : 'warning'}
+                        size="sm"
+                        className={active ? 'bg-white/25' : ''}
+                      >
                         {item.badge}
-                      </span>
+                      </Badge>
                     )}
                   </Link>
                 )

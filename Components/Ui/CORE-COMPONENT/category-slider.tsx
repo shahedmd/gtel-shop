@@ -162,13 +162,7 @@ export default function CategorySliderSection() {
                                 <h2 className="text-[14px] font-black text-slate-900">Categories</h2>
                                 <p className="mt-0.5 text-[11px] font-medium text-slate-400">Browse all product types</p>
                             </div>
-                            <Link
-                                href="/categories"
-                                className={cn('rounded-lg px-3 py-1.5 text-[11px] font-black transition hover:bg-[#2B2EE6]/14')}
-                                style={{ backgroundColor: `${PRIMARY_COLOR}/8`, color: PRIMARY_COLOR }}
-                            >
-                                View All
-                            </Link>
+    
                         </div>
 
                         {/* CATEGORY GRID */}
